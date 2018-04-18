@@ -1,0 +1,328 @@
+\documentclass[a4paper,UTF8]{article}
+\usepackage{ctex}
+\usepackage[margin=1.25in]{geometry}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{enumerate}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{epsfig}
+\usepackage{color}
+\usepackage{mdframed}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\newmdtheoremenv{thm-box}{Theorem}
+\newmdtheoremenv{prop-box}{Proposition}
+\newmdtheoremenv{def-box}{定义}
+
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+	numbers=left, 
+	numberstyle= \tiny, 
+	keywordstyle= \color{ blue!70},
+	commentstyle= \color{red!50!green!50!blue!50}, 
+	frame=shadowbox, % 阴影效果
+	rulesepcolor= \color{ red!20!green!20!blue!20} ,
+	escapeinside=``, % 英文分号中可写入中文
+	xleftmargin=2em,xrightmargin=2em, aboveskip=1em,
+	framexleftmargin=2em
+} 
+
+\usepackage{booktabs}
+
+\setlength{\evensidemargin}{.25in}
+\setlength{\textwidth}{6in}
+\setlength{\topmargin}{-0.5in}
+\setlength{\topmargin}{-0.5in}
+% \setlength{\textheight}{9.5in}
+%%%%%%%%%%%%%%%%%%此处用于设置页眉页脚%%%%%%%%%%%%%%%%%%
+\usepackage{fancyhdr}                                
+\usepackage{lastpage}                                           
+\usepackage{layout}                                             
+\footskip = 10pt 
+\pagestyle{fancy}                    % 设置页眉                 
+\lhead{2018年春季}                    
+\chead{机器学习导论}                                                
+% \rhead{第\thepage/\pageref{LastPage}页} 
+\rhead{作业二}                                                                                               
+\cfoot{\thepage}                                                
+\renewcommand{\headrulewidth}{1pt}  			%页眉线宽，设为0可以去页眉线
+\setlength{\skip\footins}{0.5cm}    			%脚注与正文的距离           
+\renewcommand{\footrulewidth}{0pt}  			%页脚线宽，设为0可以去页脚线
+
+\makeatletter 									%设置双线页眉                                        
+\def\headrule{{\if@fancyplain\let\headrulewidth\plainheadrulewidth\fi%
+\hrule\@height 1.0pt \@width\headwidth\vskip1pt	%上面线为1pt粗  
+\hrule\@height 0.5pt\@width\headwidth  			%下面0.5pt粗            
+\vskip-2\headrulewidth\vskip-1pt}      			%两条线的距离1pt        
+ \vspace{6mm}}     								%双线与下面正文之间的垂直间距              
+\makeatother  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numberwithin{equation}{section}
+%\usepackage[thmmarks, amsmath, thref]{ntheorem}
+\newtheorem{theorem}{Theorem}
+\newtheorem*{definition}{Definition}
+\newtheorem*{solution}{Solution}
+\newtheorem*{prove}{Proof}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+
+\usepackage{multirow}
+
+%--
+
+%--
+\begin{document}
+\title{机器学习导论\\
+作业二}
+\author{141110091, 吴璐欢, lhwunju@outlook.com}
+\maketitle
+
+\section{[25pts] Multi-Class Logistic Regression}
+教材的章节3.3介绍了对数几率回归解决二分类问题的具体做法。假定现在的任务不再是二分类问题，而是多分类问题，其中标记$y\in\{1,2\dots,K\}$。请将对数几率回归算法拓展到该多分类问题。
+
+\begin{enumerate}[(1)]
+	\item \textbf{[15pts]} 给出该对率回归模型的“对数似然”(log-likelihood);
+	\item \textbf{[10pts]} 计算出该“对数似然”的梯度。
+\end{enumerate}
+
+提示1：假设该多分类问题满足如下$K-1$个对数几率，
+\begin{eqnarray*}
+	\ln\frac{p(y=1|\mathbf{x})}{p(y=K|\mathbf{x})}&=&\mathbf{w}_1^\mathrm{T}\mathbf{x}+b_1\\
+	\ln\frac{p(y=2|\mathbf{x})}{p(y=K|\mathbf{x})}&=&\mathbf{w}_2^\mathrm{T}\mathbf{x}+b_2\\
+	&\dots&\\
+	\ln\frac{p(y={K-1}|\mathbf{x})}{p(y=K|\mathbf{x})}&=&\mathbf{w}_{K-1}^\mathrm{T}\mathbf{x}+b_{K-1}
+\end{eqnarray*}
+
+提示2：定义指示函数$\mathbb{I}(\cdot)$，
+$$\mathbb{I}(y=j)=
+\begin{cases}
+1& \text{若$y$等于$j$}\\
+0& \text{若$y$不等于$j$}
+\end{cases}$$
+
+\begin{solution}
+\begin{enumerate}[(1)]
+	\item According to the hint 1, let $\hat{\mathbf{x}} = (\mathbf{x}, 1), \bm{\beta}_k = (\mathbf{w}_k; \mathbf{b}_k), k=1,\cdots, K-1$, so we have the assumption for multi-class logistic regression problem:
+	\begin{equation*}
+\ln\frac{p(y=k|\hat{\mathbf{x}})}{p(y=K|\hat{\mathbf{x}})} =\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}, \quad \text{for } k =1, \cdots, K-1
+\end{equation*}
+\begin{equation}\label{prob_k}
+\Rightarrow p(y=k|\hat{\mathbf{x}}) = e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}} p(y=K|\hat{\mathbf{x}}),  \quad \text{for } k =1, \cdots, K-1
+\end{equation}
+Since probabilities of all classes sum up to 1, i.e.
+\begin{equation}\label{sum_up_to_1}
+\sum_{k=1}^K p(y=k|\hat{\mathbf{x}}) = 1.
+\end{equation}
+Substituting (\ref{prob_k}) into (\ref{sum_up_to_1}), we have
+\begin{equation}\label{prob_k_exact}
+	p(y=k|\hat{\mathbf{x}}) = 
+	\begin{cases}
+		\frac{e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}}}{1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}}} & k=1, \cdots, K-1;\\
+		\frac{1}{1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}}} & k=K.
+	\end{cases}
+\end{equation}
+The log-likelihood is:
+\begin{equation}\label{original-loglikelihood}
+\ell(\bm{\beta}_1, \cdots, \bm{\beta}_{K-1}) = \sum_{i=1}^m \ln p(y_i |\hat{\mathbf{x}}_i, \bm{\beta}_1, \cdots, \bm{\beta}_{K-1})
+\end{equation}
+Using hint 2 and (\ref{prob_k_exact}), we could rewrite the log-likelihood for the $i$-th example as:
+\begin{equation}\label{item-likelihood}
+\begin{split}
+\ln  p(y_i |\hat{\mathbf{x}}_i, \bm{\beta}_1, \cdots, \bm{\beta}_{K-1})  &= 
+\ln [ (\sum_{k=1}^{K-1} \mathbb{I}(y_i=k) \frac{e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}}{1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}}) + \mathbb{I}(y_i=K)\frac{1}{1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}} ] \\
+ &=\ln [(\sum_{k=1}^{K-1} \mathbb{I}(y_i=k) e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}) + \mathbb{I}(y_i=K)] -\ln (1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}) \\
+ &= (\sum_{k=1}^{K-1} \mathbb{I}(y_i=k) \bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i) + \mathbb{I}(y_i=K)(1-\mathbb{I}(y_i=K)) - \ln (1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}) 
+\end{split}
+\end{equation}
+Therefore, the log-likelihood (\ref{original-loglikelihood}) could be rewritten as:
+\begin{equation}\label{simplify-loglikelihood}
+\ell(\bm{\beta}_1, \cdots, \bm{\beta}_{K-1}) = \sum_{i=1}^m [ (\sum_{k=1}^{K-1} \mathbb{I}(y_i=k) \bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i) + \mathbb{I}(y_i=K)(1-\mathbb{I}(y_i=K)) - \ln (1+ \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T}\hat{\mathbf{x}}_i}) ]
+\end{equation}
+
+\item
+For $k=1, \cdots, K-1$, 
+\begin{equation}
+\begin{split}
+\frac{\partial \ell(\bm{\beta}_1, \cdots, \bm{\beta}_{K-1})}{\partial \bm{\beta}_k}  &=\sum_{i=1}^m \hat{\mathbf{x}}_i \mathbb{I} (y_i=k) -  \frac{\hat{\mathbf{x}}_i  e^{\bm{\beta}_k^\mathrm{T} \hat{\mathbf{x}}_i} }{1 + \sum_{k=1}^{K-1} e^{\bm{\beta}_k^\mathrm{T} \hat{\mathbf{x}}_i}} \\
+ &= \sum_{i=1}^m \hat{\mathbf{x}}_i [ (\mathbb{I} (y_i=k) - p(y_i=k | \hat{\mathbf{x}}_i; \bm{\beta}_1, \cdots, \bm{\beta}_{K-1})]
+\end{split}
+\end{equation}
+
+The gradient is $(\frac{\partial \ell(\bm{\beta}_1, \cdots, \bm{\beta}_{K-1})}{\partial \bm{\beta}_1}, \cdots, \frac{\partial \ell(\bm{\beta}_1, \cdots, \bm{\beta}_{K-1})}{\partial \bm{\beta}_{K-1}})^\mathrm{T}$.
+
+\end{enumerate}
+
+\end{solution}
+
+\newpage
+
+
+\section{[20pts] Linear Discriminant Analysis}
+假设有两类数据，正例独立同分布地从高斯分布$\mathcal{N}(\mu_1,\Sigma_1)$采样得到，负例独立同分布地从另一高斯分布$\mathcal{N}(\mu_2,\Sigma_2)$采样得到，其中参数$\mu_1,\Sigma_1$及$\mu_2,\Sigma_2$均已知。现在，我们定义“最优分类”：若对空间中的任意样本点，分别计算已知该样本采样于正例时该样本出现的概率与已知该样本采样于
+负例时该样本出现的概率后，取概率较大的所采类别作为最终预测的类别输出，则我们说这样的分类方式满足“最优分类”性质。
+
+试证明：当两类数据的分布参数$\Sigma_1=\Sigma_2=\Sigma$时，线性判别分析 (LDA)方法可以达到“最优分类”。（提示：找到定义的最优分类的分类平面。）
+\begin{solution}
+Let  $\mathbf{X}_1 \sim \mathcal{N}(\bm{\mu}_1,\bm{\Sigma}_1), \mathbf{X}_2 \sim \mathcal{N}(\bm{\mu}_2,\bm{\Sigma}_2)$, then the respective probabilities distribution functions are:
+\begin{equation*}
+f_i (x) = \frac{1}{\sqrt{(2 \pi)^k |\bm{\Sigma}_i| }} \exp(-\frac{1}{2} (\mathbf{x} - \bm{\mu}_i)^T \bm{\Sigma_i} ^{-1} (\mathbf{x} - \bm{\mu}_i) ) \quad \quad i = 1, 2,
+\end{equation*}
+where $k$ is the dimension of the feature space.
+
+According to Page 62 in the textbook , in LDA, the projection line $\mathbf{w}$ is given by:
+\begin{equation}\label{lda}
+\mathbf{w} = \mathbf{S}_\mathbf{w} ^{-1} (\bm{\mu}_1-\bm{\mu}_2),
+\end{equation}
+where $\mathbf{S}_\mathbf{w} = \bm{\Sigma}_1 + \bm{\Sigma}_2$.
+
+
+The optimal classification hyper-plane is given by:
+\begin{equation} \label{optimal_plane}
+f_1(\mathbf{x}) = f_2(\mathbf{x}) .
+\end{equation}
+
+When $\bm{\Sigma}_1 = \bm{\Sigma}_2 = \bm{\Sigma}$,
+(\ref{lda}) is equivalent to:
+\begin{equation}\label{lad2}
+\mathbf{w} = \frac{1}{2} \bm{\Sigma} ^{-1} (\bm{\mu}_1-\bm{\mu}_2),
+\end{equation}
+ and (\ref{optimal_plane}) is equivalent to:
+\begin{equation*}
+(\mathbf{x} - \bm{\mu}_1)^T \bm{\Sigma} ^{-1} (\mathbf{x} - \bm{\mu}_1) = (\mathbf{x} - \bm{\mu}_2)^T \bm{\Sigma} ^{-1} (\mathbf{x} - \bm{\mu}_2) 
+\end{equation*}
+\begin{equation}\label{optimal_plane2}
+\Rightarrow  \quad \quad 2\mathbf{x}^T \bm{\Sigma}^{-1} (\bm{\mu}_2 - \bm{\mu}_1) - \bm{\mu}_1 ^T \bm{\Sigma}^{-1}\bm{\mu}_1 - \bm{\mu}_2 ^T \bm{\Sigma}^{-1} \bm{\mu}_2 =0
+\end{equation}
+
+From equations (\ref{lad2}) and (\ref{optimal_plane2}) , we could see that the projection line in LDA is normal to the optimal classification hyper-plane. Therefore, LDA achieves "optimal classification" in the case when $\bm{\Sigma}_1 = \bm{\Sigma}_2 = \bm{\Sigma}$.
+\end{solution}
+\newpage
+
+
+\section{[55+10*pts] Logistic Regression Programming}
+在本题中，我们将初步接触机器学习编程，首先我们需要初步了解机器学习编程的主要步骤，然后结合对数几率回归，在UCI数据集上进行实战。机器学习编程的主要步骤可参见\href{http://blog.csdn.net/cqy_chen/article/details/78690975}{博客}。
+
+本次实验选取UCI数据集Page Blocks（\href{http://lamda.nju.edu.cn/ml2018/PS2/PS2_dataset.zip}{下载链接}）。数据集基本信息如表~\ref{data_inf}所示，此数据集特征维度为10维，共有5类样本，并且类别间样本数量不平衡。
+
+\begin{table}[!h]
+	\centering
+	\caption{Page Blocks数据集中每个类别的样本数量。}\vspace{3mm}
+	\label{data_inf}
+	\begin{tabular}{l|cccccc}\hline
+		标记     & 1    & 2   & 3  & 4  & 5   & total \\ \hline
+		训练集   & 4431 & 292 & 25 & 84 & 103 & 4935  \\
+		测试集   & 482  & 37  & 3  & 4  & 12  & 538   \\ \hline
+	\end{tabular}
+\end{table}
+
+对数几率回归（Logistic Regression, LR）是一种常用的分类算法。面对多分类问题，结合处理多分类问题技术，利用常规的LR算法便能解决这类问题。
+
+\begin{enumerate}[(1)]
+    \item \textbf{[5pts]} 此次编程作业要求使用Python 3或者MATLAB编写，请将main函数所在文件命名为~LR\_main.py或者LR\_main.m，效果为运行此文件便能完成整个训练过程，并输出测试结果，方便作业批改时直接调用；	
+	\item \textbf{[30pts]} 本题要求编程实现如下实验功能：
+	\begin{itemize}
+		\item \textbf{[10pts]} 根据《机器学习》3.3节，实现LR算法，优化算法可选择梯度下降，亦可选择牛顿法；
+		\item \textbf{[10pts]} 根据《机器学习》3.5节，利用“一对其余”（One vs. Rest, OvR）策略对分类LR算法进行改进，处理此多分类任务；
+		\item \textbf{[10pts]} 根据《机器学习》3.6节，在训练之前，请使用“过采样”（oversampling）策略进行样本类别平衡；
+	\end{itemize}
+	
+	
+
+	\item \textbf{[20pts]} 实验报告中报告算法的实现过程（能够清晰地体现 (1) 中实验要求，请勿张贴源码），如优化算法选择、相关超参数设置等，并填写表~\ref{exp_performance}，在\url{http://www.tablesgenerator.com/}上能够方便的制作LaTex表格；
+	
+	\item \textbf{[附加题 10pts]} 尝试其他类别不平衡问题处理策略（尝试方法可以来自《机器学习》也可来自其他参考材料），尽可能提高对少数样本的分类准确率，并在实验报告中给出实验设置、比较结果及参考文献；
+\end{enumerate}
+\noindent \textbf{[**注意**]} 本次实验除了numpy等数值处理工具包外禁止调用任何开源机器学习工具包，一经发现此实验题分数为0，请将实验所需所有源码文件与作业pdf文件放在同一个目录下，请勿将数据集放在提交目录中。
+
+
+\newpage
+\noindent{\textbf{实验报告.}}
+
+\begin{enumerate}[1.]
+
+\item General Procedures
+
+	\begin{enumerate}[(1)]
+	\item 	Read data: $\mathbf{x, y}$. Generally, notate the feature matrix by $\mathbf{x}$  and the label vector by $\mathbf{y}$.
+	\item Normalize feature matrix in both training set and test set: \\
+	$\mathbf{x = \frac{x - \mu}{\sigma}}$, where $\mu$ is the mean of $\mathbf{x}$, and $\mathbf{\sigma}$ the standard deviation of $\mathbf{x}$.
+	\item Input data into $\textbf{One-vs-Rest}$ algorithm\\
+		Suppose $K = $ the number of labels available.
+		\begin{enumerate}[Step 1.]
+		\item For each possible value of label, i.e. for $k = 1 : K$
+		 	\begin{enumerate}[(i)]
+		 	\item Re-label the training set according to $y = k$ or not. that is: \\
+		 	if $y = k$, relabel $y$ as 1; otherwise relabel $y$ as 0.
+		 	\item Feed the relabeled training-set into $\textbf{Binary-Logistic-Regression}$ which outputs a model (the weight matrix in the formula of logistic regression).
+		 	\item Make predictions on test set:\\
+		 	Use the trained model to obtain the predicted probabilities that each sample belongs to class $k$, and store them \\
+		 	Obtain predicted labels: predict 1 (belongs to class $k$) if probability $\geq 0.5$, otherwise 0 (not belongs to class $k$).\\
+		 	Use the predicted labels and probabilities to calculate the values of Recall and Precision, and 2-norm Error.
+		 	\end{enumerate}
+	   \item Predict classes on test set: \\
+	   For each sample in the test set, let it's predicted class be the one with maximum predicted probability that it belongs to class $k$.
+	   \item Calculate the value of $\textbf{Accuracy}$ based on the predicted classes and the ground truth.
+		\end{enumerate}
+	\end{enumerate}
+	
+\item Description of Algorithms
+	\begin{enumerate}[(1)]
+	\item $\textbf{One-vs-Rest}$ is introduced in the General Procedures above.
+	\item $\textbf{Binary-Logistic-Regression}$:\\
+	$\textbf{Input:} $ feature matrix $\mathbf{x}$, label vector $\mathbf{y}$ (0-or-1 value) of training set, learning-rate and maximum-iterations\\
+	$\textbf{Output: }$ the weight matrix for logistic regression formula\\
+	
+		\begin{enumerate}[Step 1.]
+		\item $\mathbf{x , y} = \textbf{SMOTE(x, y, k)}$: Use $\mathbf{k}$-nearest neighbors to SMOTE the training set.
+		\item $\mathbf{x = (x;1)}$: Add intercepts to $\mathbf{x}$. 
+		\item Initialize weights to be the zero-matrix.
+		\item Given the initial weights, learning-rate and maximum-iterations, use $\textbf{Gradient Descent}$ to minimize the Log-Likelihood (given in the TextBook), and then obtains a trained weight matrix.		
+		\end{enumerate}
+		
+		
+	\item $\textbf{SMOTE}$:  \\
+	$\textbf{Input:} $ feature matrix $\mathbf{x}$, label vector $\mathbf{y}$ (0-or-1 value) of training set, and $\mathbf{k}$ used for the number of nearest neighbors in the $\textbf{KNN}$ algorithm.\\
+	$\textbf{Output:} $ SMOTEd feature matrix and label vector.\\
+	
+	The detailed inpelmentation could be found in  \href{https://www.cs.cmu.edu/afs/cs/project/jair/pub/volume16/chawla02a-html/node6.html}{original SMOTE paper}. However, the original code takes in $\mathbf{T,N, k} $ as input,  where $\mathbf{T}$ is the number of minority class, $\mathbf{N}$ is the amount of SMOTE, and $\mathbf{k}$ shares the same meaning as above. We could easily compute the value of $\mathbf{T, N}$ using dataset $\mathbf{x, y}$.
+	
+		
+
+	
+	\end{enumerate}
+	
+\item Implementation and Performance\\
+
+In the assigned dataset, there are 5 classes for the samples. Therefore, there are 5 binary-logistic-regression classifiers in total. \\
+Some parameters I use for all 5 classifiers:\\
+ $\textbf{learning-rate} = 0.0005$,
+  $\textbf{maximum iterations} = 10000$, \\
+  $\mathbf{k}=5$ (for $\mathbf{k}$-nearest-neighbors).\\
+
+The performance summary is given in Table (\ref{perfomance}).
+	\begin{table}[!h]\label{perfomance}
+	\centering
+	\caption{Performance on test set: (1) recall, precision and error in each class (2) accuracy on the whole test test}\vspace{3mm}
+	\label{exp_performance}
+	\begin{tabular}{@{}l|cccccc@{}}
+		\toprule
+		Label     & 1    & 2    & 3    & 4    & 5    & \begin{tabular}[c]{@{}c@{}}Accuracy\end{tabular} \\ \midrule
+		Recall    & 0.9274 & 0.9459 & 1.0000 & 1.0000 5 & 0.8333 & \multirow{3}{*}{0.9201}                                     \\
+		Precision & 0.9824 & 0.7609 & 0.2143 & 0.8000 & 0.1818 &  \\ 
+		Error & 0.0109 & 0.0058 & 0.0061 & 0.0020 & 0.0109 & \\
+		\cmidrule(r){1-7}
+	\end{tabular}
+
+\end{table}
+
+
+
+
+\end{enumerate}
+
+\end{document}
